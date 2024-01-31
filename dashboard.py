@@ -2,22 +2,20 @@
 
 import streamlit as st
 
-from dash_functions import convert_provider_name, read_metadata
-from main import generate_vm_request_body
+from dash_functions import (convert_provider_name,
+                            read_metadata,
+                            reset_batches,
+                            calculate,
+                            generate_vm_request_body)
+
 
 TIME_UNIITS = ["h","ms","s","m","day","year"]
 
 
-def reset_batches():
-    "Clears all calculation entries."
-    st.session_state["aws_batch"] = []
-    st.session_state["azure_batch"] = []
-    st.session_state["gcp_batch"] = []
-
-
 if __name__ == "__main__":
 
-    st.title("☁️ Cloud Carbon")
+    st.markdown("# ☁️ Cloud Carbon")
+    st.markdown("#### Calculate the emissions of your cloud resources")
 
     metadata = read_metadata("metadata.json")
 
@@ -63,8 +61,19 @@ if __name__ == "__main__":
             vm_body = generate_vm_request_body(region, instance_type, duration, unit, vcpu_utilization)
             st.session_state[f"{provider}_batch"].append(vm_body)
 
+    col3, col4 = st.columns(2)
+    with col3:
+        calculate_bool = st.button("Calculate")
+        if calculate_bool:
+            calculation_result = round(calculate(),5)
+            st.metric(label="Total CO2 emissions",value=f"{str(calculation_result)}kg")
+    with col4:
+        st.button("Reset Calculation", on_click=reset_batches)
 
-    st.button("Reset Calculation", on_click=reset_batches)
 
     for item in st.session_state.items():
-        item
+        if item[0] in ("gcp_batch","aws_batch","azure_batch") and item[1]:
+            provider_name = item[0].split("_")[0]
+            provider_name = convert_provider_name(provider_name)
+            with st.expander(f"{provider_name} - {len(item[1])}"):
+                item[1]
