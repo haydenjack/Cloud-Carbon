@@ -1,3 +1,4 @@
 requests
 streamlit
 watchdog
+python-dotenv

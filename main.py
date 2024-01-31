@@ -1,6 +1,11 @@
 "Exploring the functionality of the Climatiq API Cloud Computing endpoint."
 
+from os import environ
+from dotenv import load_dotenv
 import requests
+
+
+load_dotenv()
 
 
 def calculate_vm_instance(provider: str, region: str, instance: str, duration: int) -> int:
@@ -15,7 +20,7 @@ def calculate_vm_instance(provider: str, region: str, instance: str, duration: i
           "duration": duration}
     
     response = requests.post(url=full_url,
-                             headers={"Authorization": "Bearer HWJG9AHYSB4NV3MJ8GKCD78WT84H"},
+                             headers={"Authorization": f"Bearer {environ['API_KEY']}"},
                              json=body)
     return response.json()
 
@@ -42,23 +47,21 @@ def generate_vm_request_body(region: str, instance: str, duration: int, duration
 
 if __name__ == "__main__":
 
-    # calculation = calculate_vm_instance("aws", "eu_west_2", "a1.medium", 24)
+    calculation = calculate_vm_instance("aws", "eu_west_2", "a1.medium", 24)
 
-    # print(calculation["total_co2e"])
+    print(calculation["total_co2e"])
 
-    # batch_url = "https://beta4.api.climatiq.io/compute/aws/instance/batch"
+    batch_url = "https://beta4.api.climatiq.io/compute/aws/instance/batch"
 
-    # body_array = [{"region": "eu_west_2",
-    #                "instance": "a1.medium",
-    #                "duration": 24},
-    #                {"region": "eu_west_1",
-    #                "instance": "c5.24xlarge",
-    #                "duration": 15}]
+    body_array = [{"region": "eu_west_2",
+                   "instance": "a1.medium",
+                   "duration": 24},
+                   {"region": "eu_west_1",
+                   "instance": "c5.24xlarge",
+                   "duration": 15}]
     
-    # response = requests.post(url=batch_url,
-    #                          headers={"Authorization": "Bearer HWJG9AHYSB4NV3MJ8GKCD78WT84H"},
-    #                          json=body_array)
+    response = requests.post(url=batch_url,
+                             headers={"Authorization": f"Bearer {environ['API_KEY']}"},
+                             json=body_array)
     
-    # print(response.json())
-
-    print(generate_vm_request_body("eu_west_2", "a1.medium", 24))
+    print(response.json())
