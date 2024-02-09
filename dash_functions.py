@@ -160,5 +160,5 @@ def create_piechart(emission_breakdown: dict):
         theta="output",
         color=alt.Color("service",
                         sort="ascending",
-                        legend=alt.Legend(title=None, orient="right")).scale(scheme="tableau20")
+                        legend=alt.Legend(title=None, orient="right")).scale(scheme="magma")
         )

@@ -16,6 +16,8 @@ DATA_UNITS = ["MB","GB","TB"]
 
 
 if __name__ == "__main__":
+    st. set_page_config(page_title="Cloud Carbon",
+                        page_icon="☁️")
 
     st.markdown("# ☁️ Cloud Carbon")
     st.markdown("#### Calculate the emissions of your cloud resources")
@@ -48,7 +50,10 @@ if __name__ == "__main__":
                             options=valid_regions)
 
     valid_instances = metadata["cloud_providers"][provider]["virtual_machine_instances"]
-    calculation_type = st.selectbox("Service", options=["Virtual Machine","Storage"], label_visibility="hidden")
+    calculation_type = st.radio("Service",
+                                options=["Virtual Machine","Storage"],
+                                label_visibility="hidden",
+                                horizontal=True)
 
     if calculation_type == "Virtual Machine":
         with st.form("vm_form"):
@@ -124,7 +129,10 @@ if __name__ == "__main__":
             if vm_co2e > 0 and store_co2e > 0:
                 st.metric("Virtual Machines CO2 (kg)", value=round(vm_co2e, 5))
                 st.metric("Storage CO2 (kg)", value=round(store_co2e, 5))
+                largest_contribution = sorted(result_breakdown.items(), key=lambda x:x[1], reverse=True)[0]
+                st.write(f"The largest contributor was {largest_contribution[0]} with {largest_contribution[1]} kg.")
         with col6:
+            st.subheader("🔎 Breakdown of Emissions")
             st.altair_chart(create_piechart(result_breakdown), use_container_width=True)
 
     for item in st.session_state.items():
@@ -138,3 +146,8 @@ if __name__ == "__main__":
             provider_name = convert_provider_name(provider_name)
             with st.expander(f"{provider_name} Storage - {len(item[1])}"):
                 item[1]
+    col7, col8 = st.columns([0.15, 2])
+    with col7:
+        st.image("climatiq_logo.png", width=50)
+    with col8:
+        st.write("Powered by Climatiq API")
