@@ -2,3 +2,5 @@ requests
 streamlit
 watchdog
 python-dotenv
+pandas
+altair

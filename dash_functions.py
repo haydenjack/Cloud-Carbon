@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import requests
 import json
 import streamlit as st
+import altair as alt
+import pandas as pd
 
 
 load_dotenv()
@@ -129,13 +131,34 @@ def calculate(calculation_type: str) -> int:
     azure_batch = st.session_state[f"azure_{calculation_type}_batch"]
     gcp_batch = st.session_state[f"gcp_{calculation_type}_batch"]
     total_co2e = 0
+
+    result_breakdown = {f"aws_{calculation_type}": 0,
+                        f"azure_{calculation_type}": 0,
+                        f"gcp_{calculation_type}": 0}
+
     if aws_batch:
         aws_response = send_batch_request("aws", aws_batch, endpoint)
-        total_co2e += format_batch_response(aws_response, calculation_type)
+        aws_total = format_batch_response(aws_response, calculation_type)
+        result_breakdown[f"aws_{calculation_type}"] = aws_total
     if azure_batch:
         azure_response = send_batch_request("azure", azure_batch, endpoint)
-        total_co2e += format_batch_response(azure_response, calculation_type)
+        azure_total = format_batch_response(azure_response, calculation_type)
+        result_breakdown[f"azure_{calculation_type}"] = azure_total
     if gcp_batch:
         gcp_response = send_batch_request("gcp", gcp_batch, endpoint)
-        total_co2e += format_batch_response(gcp_response, calculation_type)
-    return total_co2e
+        gcp_total = format_batch_response(gcp_response, calculation_type)
+        result_breakdown[f"gcp_{calculation_type}"] = gcp_total
+    return result_breakdown
+
+
+def create_piechart(emission_breakdown: dict):
+    "Creates a pie chart breakdown of each service contribution to overall co2e."
+
+    emission_df = pd.DataFrame(emission_breakdown.items(), columns=["service","output"])
+    emission_df = emission_df[emission_df["output"] != 0]
+    return alt.Chart(emission_df).mark_arc(innerRadius=50, outerRadius=100).encode(
+        theta="output",
+        color=alt.Color("service",
+                        sort="ascending",
+                        legend=alt.Legend(title=None, orient="right")).scale(scheme="tableau20")
+        )

@@ -7,7 +7,8 @@ from dash_functions import (convert_provider_name,
                             reset_batches,
                             calculate,
                             generate_vm_request_body,
-                            generate_storage_request_body)
+                            generate_storage_request_body,
+                            create_piechart)
 
 
 TIME_UNIITS = ["h","ms","s","m","day","year"]
@@ -100,14 +101,31 @@ if __name__ == "__main__":
         st.button("Reset Calculation", on_click=reset_batches)
     
     if calculate_bool:
-        vm_result = round(calculate("vm"),5)
-        store_result = round(calculate("store"), 5)
-        calculation_result = vm_result + store_result
-        st.metric(label="Total CO2 emissions",value=f"{str(calculation_result)}kg")
-        result_description = "Breakdown: "
-        if vm_result > 0 and store_result > 0:
-            st.write(f"Breakdown: Virtual Machines - {vm_result}, Storage - {store_result}")
+        vm_result = calculate("vm")
+        store_result = calculate("store")
 
+        result_breakdown = vm_result | store_result
+
+        total_co2e = 0
+        store_co2e = 0
+        vm_co2e = 0
+    
+        for key, value in result_breakdown.items():
+            total_co2e += value
+            c_type = key.split("_")[-1]
+            if c_type == "store":
+                store_co2e += value
+            if c_type == "vm":
+                vm_co2e += value
+    
+        col5, col6 = st.columns(2)
+        with col5:
+            st.metric("Total CO2 (kg)", value=round(total_co2e, 5))
+            if vm_co2e > 0 and store_co2e > 0:
+                st.metric("Virtual Machines CO2 (kg)", value=round(vm_co2e, 5))
+                st.metric("Storage CO2 (kg)", value=round(store_co2e, 5))
+        with col6:
+            st.altair_chart(create_piechart(result_breakdown), use_container_width=True)
 
     for item in st.session_state.items():
         if item[0] in ("gcp_vm_batch","aws_vm_batch","azure_vm_batch") and item[1]:
